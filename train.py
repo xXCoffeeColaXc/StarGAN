@@ -37,11 +37,9 @@ def reset_grad(g_opt, d_opt):
     d_opt.zero_grad()
 
 
-def train_fn(disc, gen, loader, g_opt, d_opt):
+def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
    
-    # Start training.
-    print('Start training...')
-    start_time = time.time()
+    # TODO: Implement resume traning
 
     loop = tqdm(loader, leave=True)
 
@@ -120,7 +118,7 @@ def train_fn(disc, gen, loader, g_opt, d_opt):
         # Originial-to-target domain
         x_fake = gen(x_real, c_trg)
         out_src, out_cls = disc(x_fake)
-        g_loss_fake = - torch.mean(out_src) # multiplied with -1 idk?
+        g_loss_fake = - torch.mean(out_src)
         g_loss_cls = classification_loss(out_cls, label_trg)
 
         # Target-to-original domain
