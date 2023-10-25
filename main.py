@@ -1,21 +1,31 @@
-from data_loader import DawnDataset
+from data_loader import ACDCDataset
+from torch.utils.data import DataLoader
 from model import Generator, Discriminator
 import config
+from train import train_fn
+import os
+from utils import save_checkpoint, save_some_examples
 
 from torchvision import transforms
 import torch
+import torch.optim as optim
 
-if __name__ == "__main__":
 
+def main():
     # Create Datalaoder
     transform = transforms.Compose([
-            transforms.Resize((config.IMAGE_SIZE, config.IMAGE_SIZE)),
+            transforms.Resize(config.IMAGE_SIZE, transforms.InterpolationMode.BILINEAR),  # Resize the smallest side to 128 and maintain aspect ratio
+            transforms.RandomCrop(config.IMAGE_SIZE), # is this doing anything ?
             transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
-    dataset = DawnDataset(root_dir=config.DAWN_DATASET_DIR, batch_size=config.BATCH_SIZE, num_workers=config.NUM_WORKERS, transform=transform)
+    train_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, transform=transform, mode='train')
+    train_loader = DataLoader(train_dataset, batch_size=config.BATCH_SIZE, shuffle=True)
 
-    data_loader = dataset.get_dataloader()
+
+    val_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, transform=transform, mode='val')
+    val_loader = DataLoader(val_dataset, batch_size=config.BATCH_SIZE, shuffle=False)
+
 
     # Create StarGAN
     disc = Discriminator(image_size=config.IMAGE_SIZE, in_channels=config.CHANNEL_IMG, features=64, c_dim=config.NUM_DOMAINS)
@@ -24,29 +34,27 @@ if __name__ == "__main__":
     gen = Generator(in_channels=config.CHANNEL_IMG, feautues=64, c_dim=config.NUM_DOMAINS)
     gen = gen.to(config.DEVICE)
 
-    # Preprocess input data
-    x,y = next(iter(data_loader))
-
-    label_org = dataset.get_domain_labels(y)
-    rand_idx = torch.randperm(label_org.size(0)) # Generate target domain labels randomly.
-    label_trg = label_org[rand_idx]
-
-    c_org = label_org.clone()
-    c_trg = label_trg.clone()
-
-    x_real = x.to(config.DEVICE)                # Input images.
-    c_org = c_org.to(config.DEVICE)             # Original domain labels.
-    c_trg = c_trg.to(config.DEVICE)             # Target domain labels.
-    label_org = label_org.to(config.DEVICE)     # Labels for computing classification loss.
-    label_trg = label_trg.to(config.DEVICE)     # Labels for computing classification loss.
+    opt_disc = optim.Adam(disc.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
+    opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
+    #BCE = nn.BCEWithLogitsLoss() # standard GAN loss
 
 
-    # Predictions
-    src, cls = disc(x_real)
-   
-    print(src[0])
-    print(cls[0])
+    for epoch in range(config.NUM_EPOCHS):
+        train_fn(disc=disc, gen=gen, loader=train_loader, g_opt=opt_gen, d_opt=opt_disc) # could pass BCE, GradientScaler
 
-    x_fake = gen(x_real, c_trg)
+        if config.SAVE_MODEL and epoch%5==0:
+            pass
+            #save_checkpoint(gen, opt_gen, filename=os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_GEN))
+            #save_checkpoint(disc, opt_disc, filename=os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_DISC))
 
-    print(x_fake.shape)
+        #save_some_examples(gen, val_loader, epoch, folder=config.EVAL_DIR)
+
+
+if __name__ == "__main__":
+    main()
+    
+
+
+
+
+    
