@@ -26,16 +26,18 @@ def save_some_examples(gen, val_loader, epoch, folder):
     rand_idx = torch.randperm(y.size(0)) # Generate target domain labels randomly.
     label_trg = y[rand_idx]
 
-    label_trg = label_trg.to(config.DEVICE)
+    #label_trg = label_trg.to(config.DEVICE)
 
     conditions = ['fog', 'night', 'rain', 'snow', 'daytime']
+
+    print(onehot2label(label_trg.cpu()))
 
     gen.eval()
     with torch.no_grad():
         y_fake = gen(x, label_trg)
         y_fake = y_fake * 0.5 + 0.5  # remove normalization
-        save_image(y_fake, folder + f"/y_gen_{epoch}_{conditions[onehot2label(label_trg)]}.png")
-        save_image(x * 0.5 + 0.5, folder + f"/input_{epoch}.png")
+        save_image(y_fake, folder + f"/y_gen_{epoch+1}_{conditions[onehot2label(label_trg.cpu())[-1]]}.png")
+        save_image(x * 0.5 + 0.5, folder + f"/input_{epoch+1}.png")
     gen.train()
 
 def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
