@@ -36,11 +36,9 @@ def main():
 
     opt_disc = optim.Adam(disc.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
     opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
-    #BCE = nn.BCEWithLogitsLoss() # standard GAN loss
-
 
     for epoch in range(config.NUM_EPOCHS):
-        train_fn(disc=disc, gen=gen, loader=train_loader, g_opt=opt_gen, d_opt=opt_disc) # could pass BCE, GradientScaler
+        train_fn(disc=disc, gen=gen, loader=train_loader, g_opt=opt_gen, d_opt=opt_disc) # could pass GradientScaler
 
         if config.SAVE_MODEL and epoch%5==0:
             pass
