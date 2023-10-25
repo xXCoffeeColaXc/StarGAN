@@ -9,7 +9,7 @@ from utils import save_checkpoint, save_some_examples
 from torchvision import transforms
 import torch
 import torch.optim as optim
-
+import time
 
 def main():
     # Create Datalaoder
@@ -37,15 +37,20 @@ def main():
     opt_disc = optim.Adam(disc.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
     opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
 
+    # Start training.
+    print('Start training...')
+    start_time = time.time()
+
     for epoch in range(config.NUM_EPOCHS):
-        train_fn(disc=disc, gen=gen, loader=train_loader, g_opt=opt_gen, d_opt=opt_disc) # could pass GradientScaler
+        train_fn(disc=disc, gen=gen, loader=train_loader, g_opt=opt_gen, d_opt=opt_disc, start_time=start_time) # could pass GradientScaler
 
         if config.SAVE_MODEL and epoch%5==0:
             pass
-            #save_checkpoint(gen, opt_gen, filename=os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_GEN))
-            #save_checkpoint(disc, opt_disc, filename=os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_DISC))
+            #TODO save_checkpoint(gen, opt_gen, filename=os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_GEN))
+            #TODO save_checkpoint(disc, opt_disc, filename=os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_DISC))
 
-        #save_some_examples(gen, val_loader, epoch, folder=config.EVAL_DIR)
+        # TODO Save images for debugging
+        save_some_examples(gen, val_loader, epoch, folder=config.EVAL_DIR)
 
 
 if __name__ == "__main__":
