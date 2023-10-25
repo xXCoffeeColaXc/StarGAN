@@ -8,3 +8,7 @@ def label2onehot(labels, dim):
     out = torch.zeros(batch_size, dim)
     out[np.arange(batch_size), labels.long()] = 1
     return out
+
+def onehot2label(labels):
+    """Convert one-hot vectors to label indices """
+    return np.where(labels.numpy() == 1)[1]

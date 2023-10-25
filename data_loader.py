@@ -39,7 +39,7 @@ if __name__ == "__main__":
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
-    dataset = DawnDataset(root_dir=config.TRAIN_DIR, batch_size=config.BATCH_SIZE, num_workers=config.NUM_WORKERS, transform=transform)
+    dataset = DawnDataset(root_dir=config.DAWN_DATASET_DIR, batch_size=config.BATCH_SIZE, num_workers=config.NUM_WORKERS, transform=transform)
 
     data_loader = dataset.get_dataloader()
 
