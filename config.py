@@ -27,7 +27,9 @@ BETA2 = 0.999 # for ADAM (this is the default, no ?)
 LEARNING_RATE = 1e-4 # for both generater and discriminator
 BATCH_SIZE = 8
 NUM_EPOCHS = 200
+N_CRITIC = 5 # number of D updates per each G update 
 NUM_WORKERS = 4
 SAVE_MODEL = True
+LOG_STEP = 10
 
 
