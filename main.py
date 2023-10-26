@@ -4,7 +4,7 @@ from model import Generator, Discriminator
 import config
 from train import train_fn
 import os
-from utils import save_checkpoint, save_some_examples
+from utils import save_checkpoint, save_some_examples, load_checkpoint, weights_init_normal
 
 from torchvision import transforms
 import torch
@@ -27,15 +27,29 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=config.BATCH_SIZE, shuffle=False)
 
 
-    # Create StarGAN
+    # Initialize generator and discriminator
     disc = Discriminator(image_size=config.IMAGE_SIZE, in_channels=config.CHANNEL_IMG, features=64, c_dim=config.NUM_DOMAINS)
     disc = disc.to(config.DEVICE)
 
     gen = Generator(in_channels=config.CHANNEL_IMG, feautues=64, c_dim=config.NUM_DOMAINS)
     gen = gen.to(config.DEVICE)
 
+   
+
+    # Optimizers
     opt_disc = optim.Adam(disc.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
     opt_gen = optim.Adam(gen.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
+
+    criterion_cycle = torch.nn.L1Loss()
+    criterion_cycle = criterion_cycle.to(config.DEVICE)
+
+
+    if config.LOAD_MODEL:
+        load_checkpoint(os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_GEN), gen, opt_gen, config.LEARNING_RATE)
+        load_checkpoint(os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_DISC), disc, opt_disc, config.LEARNING_RATE)
+    else:
+        gen.apply(weights_init_normal)
+        disc.apply(weights_init_normal)
 
     # Start training.
     print('Start training...')
@@ -49,7 +63,7 @@ def main():
             #TODO save_checkpoint(gen, opt_gen, filename=os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_GEN))
             #TODO save_checkpoint(disc, opt_disc, filename=os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_DISC))
 
-        # TODO Save images for debugging
+        # Save images for debugging
         save_some_examples(gen, val_loader, epoch, folder=config.EVAL_DIR)
 
 

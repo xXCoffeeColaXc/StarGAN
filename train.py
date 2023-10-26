@@ -11,7 +11,7 @@ def update_lr():
 def test_fn():
     pass
 
-def classification_loss(logit, target): # pass it as a parameter ?
+def classification_loss(logit, target): 
     """Compute binary or softmax cross entropy loss."""
     target = target.float()
     return F.binary_cross_entropy_with_logits(logit, target, size_average=False) / logit.size(0) 
@@ -94,7 +94,7 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
         '''
 
         # Backward and optimize
-        # d_loss_fake is for generator no ?? || (d_loss_real + d_loss_fake) / 2 ??
+        # NOTE (d_loss_real + d_loss_fake) / 2 ??
         # NOTE: L(D) = -L(adv) + lamda_cls * L_r(cls)
         d_loss = (d_loss_real + d_loss_fake) + config.LAMBDA_CLS * d_loss_cls + config.LAMBDA_GP * d_loss_gp
         reset_grad(g_opt, d_opt) # d_opt.zero_grad()
@@ -115,27 +115,30 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
 
         # NOTE: TRY OUT N_CRITIC=5: train generator on every fifth iteration (idx+1 % N_CRITIC == 0), disc learns too fast...
 
-        # Originial-to-target domain
-        x_fake = gen(x_real, c_trg)
-        out_src, out_cls = disc(x_fake)
-        g_loss_fake = - torch.mean(out_src)
-        g_loss_cls = classification_loss(out_cls, label_trg)
+        # Every n_critic times update generator
+        if (idx+1) % config.N_CRITIC == 0:
 
-        # Target-to-original domain
-        x_reconst = gen(x_fake, c_org)
-        g_loss_rec = torch.mean(torch.abs(x_real-x_reconst))
+            # Originial-to-target domain
+            x_fake = gen(x_real, c_trg)
+            out_src, out_cls = disc(x_fake)
+            g_loss_fake = - torch.mean(out_src)
+            g_loss_cls = classification_loss(out_cls, label_trg)
 
-        # Backward and optimize
-        # NOTE: L(G) = L(adv) + lamda_cls * L_f(cls) + lambda_rec * L(rec)
-        g_loss = g_loss_fake + config.LAMBDA_REC * g_loss_rec + config.LAMBDA_CLS * g_loss_cls
-        reset_grad(g_opt, d_opt) # g_opt.zero_grad()
-        g_loss.backward()
-        g_opt.step()
+            # Target-to-original domain
+            x_reconst = gen(x_fake, c_org)
+            g_loss_rec = torch.mean(torch.abs(x_real-x_reconst)) # NOTE L1 Loss could be criterion_cycle(x_reconst, x_real)
 
-        # Logging.
-        loss['G/loss_fake'] = g_loss_fake.item()
-        loss['G/loss_rec'] = g_loss_rec.item()
-        loss['G/loss_cls'] = g_loss_cls.item()
+            # Backward and optimize
+            # NOTE: L(G) = L(adv) + lamda_cls * L_f(cls) + lambda_rec * L(rec)
+            g_loss = g_loss_fake + config.LAMBDA_REC * g_loss_rec + config.LAMBDA_CLS * g_loss_cls
+            reset_grad(g_opt, d_opt) # g_opt.zero_grad()
+            g_loss.backward()
+            g_opt.step()
+
+            # Logging.
+            loss['G/loss_fake'] = g_loss_fake.item()
+            loss['G/loss_rec'] = g_loss_rec.item()
+            loss['G/loss_cls'] = g_loss_cls.item()
 
         # =================================================================================== #
         #                                 4. Miscellaneous                                    #
