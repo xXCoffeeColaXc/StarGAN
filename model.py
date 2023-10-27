@@ -119,69 +119,6 @@ class Discriminator(nn.Module):
         out_src = self.out_src(h)
         out_cls = self.out_cls(h)
         return out_src, out_cls.view(out_cls.size(0), out_cls.size(1))
-    
-
-if __name__ == "__main__":
-    x = torch.randn(4,3,128,128)
-    
-    label = [0,1,0,2]
-    label_org = torch.FloatTensor(label)
-
-    #label_org = torch.randint(0, 3, (4,))
-
-    print(f" label: {label_org}")
-    print(label_org.shape)
-
-    # Generate target domain labels randomly.
-    rand_idx = torch.randperm(label_org.size(0))
-    label_trg = label_org[rand_idx]
-
-    #c_org = label_org.clone()
-    c_org = label2onehot(label_org, 4)
-    c_trg = label2onehot(label_trg, 4)
-
-    #print(f"onehot vector: {c_org}")
-    #print(c_org.shape)
-
-    x_real = x.to(config.DEVICE)           # Input images.
-    c_org = c_org.to(config.DEVICE)             # Original domain labels.
-    c_trg = c_trg.to(config.DEVICE)             # Target domain labels.
-    label_org = label_org.to(config.DEVICE)     # Labels for computing classification loss.
-    label_trg = label_trg.to(config.DEVICE)     # Labels for computing classification loss.
-
-    #print(c_org.size(0))
-    #print(c_org.size(1))
-
-    #print(x.size(2))
-    #print(x.size(3))
-
-    c = c_org.view(c_org.size(0), c_org.size(1), 1, 1)
-    c = c.repeat(1, 1, x_real.size(2), x_real.size(3))
-    x = torch.cat([x_real, c], dim=1)
-
-    #print(f"c: {c[2]}")
-    #print(c.shape)
-
-    #print(x.shape)
-
-    model = Generator(in_channels=config.CHANNEL_IMG, feautues=64, c_dim=config.NUM_DOMAINS)
-    model = model.to(config.DEVICE)
-
-    disc = Discriminator(image_size=config.IMAGE_SIZE, in_channels=config.CHANNEL_IMG, features=64, c_dim=config.NUM_DOMAINS)
-    disc = disc.to(config.DEVICE)
-    print(disc)
-
-    # PatchGAN 2x2
-    src, cls = disc(x_real)
-   
-    print(src)
-    print(cls)
-
-   
-
-    #preds = model(x_real, c_org)
-    #print(preds.shape)
-    #print(model)    
 
 
     

@@ -8,9 +8,6 @@ import datetime
 def update_lr():
     pass
 
-def test_fn():
-    pass
-
 def classification_loss(logit, target): 
     """Compute binary or softmax cross entropy loss."""
     target = target.float()
@@ -161,3 +158,6 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
 
 
 
+
+def test_fn():
+    pass

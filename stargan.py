@@ -22,10 +22,6 @@ class StarGAN():
         if config.LOAD_MODEL:
             self.restore_model()
         else:
-            if config.LOG:
-                for name, param in self.gen.state_dict().items():
-                    if 'weight' in name:
-                        print(f'{name}: {param}')
             self.gen.apply(self.weights_init_normal)
             self.disc.apply(self.weights_init_normal)
 

@@ -30,7 +30,7 @@ NUM_EPOCHS = 200
 N_CRITIC = 5 # number of D updates per each G update 
 NUM_WORKERS = 4
 SAVE_MODEL = True
-LOAD_MODEL = False
+LOAD_MODEL = True
 LOG_STEP = 10
 LOG = True
 

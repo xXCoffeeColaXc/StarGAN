@@ -14,16 +14,12 @@ def onehot2label(labels):
     """Convert one-hot vectors to label indices """
     return np.where(labels.numpy() == 1)[1]
 
-
-# THIS IS SHIT
 def save_some_examples(gen, val_loader, epoch, folder):
     x, y = next(iter(val_loader))
     x, y = x.to(config.DEVICE), y.to(config.DEVICE)
 
     rand_idx = torch.randperm(y.size(0)) # Generate target domain labels randomly.
     label_trg = y[rand_idx]
-
-    #label_trg = label_trg.to(config.DEVICE)
 
     conditions = ['fog', 'night', 'rain', 'snow', 'daytime']
 

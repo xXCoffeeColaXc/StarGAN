@@ -1,11 +1,8 @@
 from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from PIL import Image
 import torch
 import os
-import random
-import config
 
 # Eventually delete Dawn Dataset, merge the two into one
 class DawnDataset:
@@ -74,33 +71,4 @@ class ACDCDataset(Dataset):
         label = torch.tensor(self.labels[idx])
         return image, label
 
-
-if __name__ == "__main__":
-
-    transform = transforms.Compose([
-            transforms.Resize((config.IMAGE_SIZE, config.IMAGE_SIZE)),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        ])
-    
-    acdc_transform = transforms.Compose([
-            transforms.Resize(128, transforms.InterpolationMode.BILINEAR),  # Resize the smallest side to 128 and maintain aspect ratio
-            transforms.RandomCrop(128), 
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ])
-    '''
-    # DAWN dataset
-    dataset = DawnDataset(root_dir=config.DAWN_DATASET_DIR, batch_size=config.BATCH_SIZE, num_workers=config.NUM_WORKERS, transform=transform)
-    data_loader = dataset.get_dataloader()
-
-    for images, labels in data_loader:
-        print(images.shape)  # Should be [batch_size, 3, 128, 128]
-        domain_labels = dataset.get_domain_labels(labels)
-        print(domain_labels)
-        break
-    '''
-
-    acdc_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, transform=acdc_transform, mode='train')
-    acdc_dataloader = DataLoader(acdc_dataset, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=config.NUM_WORKERS)
 
