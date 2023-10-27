@@ -3,9 +3,6 @@ import numpy as np
 import config
 from torchvision.utils import save_image
 
-def denorm():
-    pass
-
 def label2onehot(labels, dim):
     """Convert label indices to one-hot vectors."""
     batch_size = labels.size(0)
@@ -59,24 +56,5 @@ def load_checkpoint(checkpoint_file, model, optimizer, lr):
     for param_group in optimizer.param_groups:
         param_group["lr"] = lr
 
-def weights_init_normal(m):
-    classname = m.__class__.__name__
-    if classname.find("Conv") != -1:
-        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
-
-def build_model():
-    pass
-
-def print_model():
-    pass
-
-def restore_model():
-    pass
-
-def save_model():
-    pass
-
-def build_tensorboard():
-    pass
 
 
