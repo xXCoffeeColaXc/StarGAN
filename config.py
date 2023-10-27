@@ -32,5 +32,5 @@ NUM_WORKERS = 4
 SAVE_MODEL = True
 LOAD_MODEL = False
 LOG_STEP = 10
-
+LOG = True
 
