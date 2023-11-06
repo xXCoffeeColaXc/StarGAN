@@ -3,6 +3,7 @@ from torchvision.datasets import ImageFolder
 from PIL import Image
 import torch
 import os
+from utils import condition2onehot
 
 # Eventually delete Dawn Dataset, merge the two into one
 class DawnDataset:
@@ -29,20 +30,15 @@ class DawnDataset:
         return torch.tensor([self.domain_map[self.dataset.classes[label]] for label in folder_labels])
 
 class ACDCDataset(Dataset):
-    def __init__(self, root_dir, transform=None, mode='train'):
+    def __init__(self, root_dir, selected_conditions=['daytime', 'fog'], transform=None, mode='train'):
         self.root_dir = root_dir
         self.mode = mode
         
         # Define the weather conditions and corresponding labels
-        self.conditions = ['fog', 'night', 'rain', 'snow', 'daytime']
-        self.condition_labels = {
-            'fog':    [1, 0, 0, 0, 0], # this should be float, might fuck up indexing ? try out
-            'night':  [0, 1, 0, 0, 0],
-            'rain':   [0, 0, 1, 0, 0],
-            'snow':   [0, 0, 0, 1, 0],
-            'daytime':[0, 0, 0, 0, 1]
-        }
-
+        self.selected_conditions = selected_conditions
+        self.condition_labels = condition2onehot(selected_conditions)
+        print(self.condition_labels)
+       
         self.transform = transform
 
         self.preprocess()
@@ -51,7 +47,7 @@ class ACDCDataset(Dataset):
         # Collect all the image paths and corresponding labels
         self.img_paths = []
         self.labels = []
-        for condition in self.conditions:
+        for condition in self.selected_conditions:
             condition_path = os.path.join(self.root_dir, condition, self.mode)
             for folder in os.listdir(condition_path):
                 if not folder.endswith('_ref'):  # Exclude the '_ref' folders
