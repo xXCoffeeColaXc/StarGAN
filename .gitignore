@@ -1,6 +1,4 @@
 /__pycache__
 /data
-/saved_models
 /logs
-/eval
-/results
+/output
