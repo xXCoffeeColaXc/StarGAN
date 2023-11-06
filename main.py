@@ -3,6 +3,7 @@ from data_loader import ACDCDataset
 from torch.utils.data import DataLoader
 import config
 from stargan import StarGAN
+from utils import setup_folders
 
 def main():
     # Create Datalaoders
@@ -12,22 +13,23 @@ def main():
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
-    
-    train_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, transform=transform, mode='train')
+   
+    train_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, selected_conditions=config.SELECTED_DOMAIN, transform=transform, mode='train')
     train_loader = DataLoader(train_dataset, batch_size=config.BATCH_SIZE, shuffle=True)
 
-    val_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, transform=transform, mode='val')
+    val_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, selected_conditions=config.SELECTED_DOMAIN, transform=transform, mode='val')
     val_loader = DataLoader(val_dataset, batch_size=config.BATCH_SIZE, shuffle=True)
 
 
     # Initialize StarGAN
     model = StarGAN(train_loader=train_loader, val_loader=val_loader)
 
-    model.print_model()
+    #model.print_model()
 
     model.train()
 
 if __name__ == "__main__":
+    setup_folders()
     main()
     
 
