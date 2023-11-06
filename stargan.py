@@ -30,14 +30,14 @@ class StarGAN():
             print('[START TRAINING]')
         start_time = time.time()
 
-        for epoch in range(config.NUM_EPOCHS):
+        for epoch in range(1, config.NUM_EPOCHS):
             train_fn(disc=self.disc, gen=self.gen, loader=self.train_loader, g_opt=self.opt_gen, d_opt=self.opt_disc, start_time=start_time) # could pass GradientScaler
 
             if config.SAVE_MODEL and epoch%5==0:
                 self.save_model()
                 
             # Save images for debugging
-            save_some_examples(self.gen, self.val_loader, epoch, folder=config.EVAL_DIR)
+            save_some_examples(self.gen, self.val_loader, epoch, folder=config.OUTPUT_IMG_DIR)
 
     def test(self):
         pass
@@ -56,7 +56,7 @@ class StarGAN():
         self.gen = Generator(in_channels=config.CHANNEL_IMG, feautues=64, c_dim=config.NUM_DOMAINS)
         self.gen = self.gen.to(config.DEVICE)
 
-        # Optimizers
+        # Optimizers TODO try AdamW
         self.opt_disc = Adam(self.disc.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
         self.opt_gen = Adam(self.gen.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
 
@@ -71,12 +71,12 @@ class StarGAN():
         print(self.disc.parameters)
 
     def restore_model(self):
-        load_checkpoint(os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_GEN), self.gen, self.opt_gen, config.LEARNING_RATE)
-        load_checkpoint(os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_DISC), self.disc, self.opt_disc, config.LEARNING_RATE)
+        load_checkpoint(os.path.join(config.OUTPUT_MODELS_DIR, config.CHECKPOINT_GEN), self.gen, self.opt_gen, config.LEARNING_RATE)
+        load_checkpoint(os.path.join(config.OUTPUT_MODELS_DIR, config.CHECKPOINT_DISC), self.disc, self.opt_disc, config.LEARNING_RATE)
 
     def save_model(self):
-        save_checkpoint(self.gen, self.opt_gen, filename=os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_GEN))
-        save_checkpoint(self.disc, self.opt_disc, filename=os.path.join(config.SAVED_MODELS_DIR, config.CHECKPOINT_DISC))
+        save_checkpoint(self.gen, self.opt_gen, filename=os.path.join(config.OUTPUT_MODELS_DIR, config.CHECKPOINT_GEN))
+        save_checkpoint(self.disc,self.opt_disc,filename=os.path.join(config.OUTPUT_MODELS_DIR, config.CHECKPOINT_DISC))
 
     def weights_init_normal(self, m):
         classname = m.__class__.__name__

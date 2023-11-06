@@ -5,6 +5,7 @@ from tqdm import tqdm
 import torch.nn.functional as F
 import datetime
 
+
 def update_lr():
     pass
 
@@ -35,8 +36,6 @@ def reset_grad(g_opt, d_opt):
 
 
 def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
-   
-    # TODO: Implement resume traning
 
     loop = tqdm(loader, leave=True)
 
