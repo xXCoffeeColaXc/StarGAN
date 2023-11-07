@@ -15,6 +15,7 @@ def update_condition_labels( new_condition_name):
     condition_labels[new_condition_name] = [0] * (config.NUM_DOMAINS - 1) + [1]
 '''
 
+# TODO remove ref folders for space efficiency
 
 def create_daytime_folder(no_img):
     all_ref_images = []
