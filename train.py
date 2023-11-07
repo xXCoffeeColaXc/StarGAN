@@ -4,10 +4,14 @@ import config
 from tqdm import tqdm
 import torch.nn.functional as F
 import datetime
+import wandb
 
-
-def update_lr():
-    pass
+def update_lr(self, g_lr, d_lr):
+    """Decay learning rates of the generator and discriminator."""
+    for param_group in self.g_optimizer.param_groups:
+        param_group['lr'] = g_lr
+    for param_group in self.d_optimizer.param_groups:
+        param_group['lr'] = d_lr
 
 def classification_loss(logit, target): 
     """Compute binary or softmax cross entropy loss."""
@@ -93,7 +97,8 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
         # NOTE (d_loss_real + d_loss_fake) / 2 ??
         # NOTE: L(D) = -L(adv) + lamda_cls * L_r(cls)
         d_loss = (d_loss_real + d_loss_fake) + config.LAMBDA_CLS * d_loss_cls + config.LAMBDA_GP * d_loss_gp
-        reset_grad(g_opt, d_opt) # d_opt.zero_grad()
+        #reset_grad(g_opt, d_opt) 
+        d_opt.zero_grad()
         d_loss.backward()
         d_opt.step()
 
@@ -103,7 +108,6 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
         loss['D/loss_fake'] = d_loss_fake.item()
         loss['D/loss_cls'] = d_loss_cls.item()
         loss['D/loss_gp'] = d_loss_gp.item()
-
 
         # =================================================================================== #
         #                               3. Train the generator                                #
@@ -127,7 +131,8 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
             # Backward and optimize
             # NOTE: L(G) = L(adv) + lamda_cls * L_f(cls) + lambda_rec * L(rec)
             g_loss = g_loss_fake + config.LAMBDA_REC * g_loss_rec + config.LAMBDA_CLS * g_loss_cls
-            reset_grad(g_opt, d_opt) # g_opt.zero_grad()
+            #reset_grad(g_opt, d_opt) 
+            g_opt.zero_grad()
             g_loss.backward()
             g_opt.step()
 
@@ -151,9 +156,17 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
                 log += ", {}: {:.4f}".format(tag, value)
             print(log)
 
+        wandb.log(loss)
+
+
         # LR decay
         # TODO
-
+        # Decay learning rates.
+        # if (idx+1) % config.LR_UPDATE_STEP == 0 and (idx+1) > ( - self.num_iters_decay):
+        #     g_lr -= (config.G_LR / float(self.num_iters_decay))
+        #     d_lr -= (config.D_LR / float(self.num_iters_decay))
+        #     update_lr(g_lr, d_lr)
+        #     print ('Decayed learning rates, g_lr: {}, d_lr: {}.'.format(g_lr, d_lr))
 
 
 

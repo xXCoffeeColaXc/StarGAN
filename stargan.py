@@ -2,19 +2,20 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 from torch.optim import Adam
-from model import Discriminator, Generator, ConvBlock
+from modules import Discriminator, Generator, ConvBlock
 import config
 import time
 from train import train_fn
 from utils import save_checkpoint, save_some_examples, load_checkpoint
 import os
-
+import wandb
 
 class StarGAN():
     def __init__(self, train_loader, val_loader) -> None:
         self.train_loader = train_loader
         self.val_loader = val_loader
 
+        self.setup_logger()
         self.build_model()
 
 
@@ -37,7 +38,11 @@ class StarGAN():
                 self.save_model()
                 
             # Save images for debugging
-            save_some_examples(self.gen, self.val_loader, epoch, folder=config.OUTPUT_IMG_DIR)
+            if epoch%5==0:
+                save_some_examples(self.gen, self.val_loader, epoch, folder=config.OUTPUT_IMG_DIR)
+        
+        # Finish the WandB run when you're done training
+        wandb.finish()
 
     def test(self):
         pass
@@ -53,12 +58,12 @@ class StarGAN():
         self.disc = Discriminator(image_size=config.IMAGE_SIZE, in_channels=config.CHANNEL_IMG, features=64, c_dim=config.NUM_DOMAINS)
         self.disc = self.disc.to(config.DEVICE)
 
-        self.gen = Generator(in_channels=config.CHANNEL_IMG, feautues=64, c_dim=config.NUM_DOMAINS)
+        self.gen = Generator(in_channels=config.CHANNEL_IMG, features=64, c_dim=config.NUM_DOMAINS)
         self.gen = self.gen.to(config.DEVICE)
 
         # Optimizers TODO try AdamW
-        self.opt_disc = Adam(self.disc.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
-        self.opt_gen = Adam(self.gen.parameters(), lr=config.LEARNING_RATE, betas=(config.BETA1, config.BETA2))
+        self.opt_disc = Adam(self.disc.parameters(), lr=config.D_LR, betas=(config.BETA1, config.BETA2))
+        self.opt_gen = Adam(self.gen.parameters(), lr=config.G_LR, betas=(config.BETA1, config.BETA2))
 
         if config.LOG:
             print("[MODEL BUILT]")
@@ -71,8 +76,8 @@ class StarGAN():
         print(self.disc.parameters)
 
     def restore_model(self):
-        load_checkpoint(os.path.join(config.OUTPUT_MODELS_DIR, config.CHECKPOINT_GEN), self.gen, self.opt_gen, config.LEARNING_RATE)
-        load_checkpoint(os.path.join(config.OUTPUT_MODELS_DIR, config.CHECKPOINT_DISC), self.disc, self.opt_disc, config.LEARNING_RATE)
+        load_checkpoint(os.path.join(config.OUTPUT_MODELS_DIR, config.CHECKPOINT_GEN), self.gen, self.opt_gen, config.G_LR)
+        load_checkpoint(os.path.join(config.OUTPUT_MODELS_DIR, config.CHECKPOINT_DISC), self.disc, self.opt_disc, config.D_LR)
 
     def save_model(self):
         save_checkpoint(self.gen, self.opt_gen, filename=os.path.join(config.OUTPUT_MODELS_DIR, config.CHECKPOINT_GEN))
@@ -86,5 +91,23 @@ class StarGAN():
             for submodule in m.children():
                 if isinstance(submodule, nn.Conv2d):
                     torch.nn.init.normal_(submodule.weight.data, 0.0, 0.02)
+
+    def setup_logger(self):
+        # Initialize WandB
+        wandb.init(project='stargan-weather', entity='tamsyandro', config={
+            "learning_rate": config.D_LR,  # Both discriminator and generator learning rate
+            "epochs": config.NUM_EPOCHS,
+            "batch_size": config.BATCH_SIZE,
+            "image_size": config.IMAGE_SIZE,
+            "selected_domains": config.SELECTED_DOMAIN,
+            "lambda_cls": config.LAMBDA_CLS,
+            "lambda_rec": config.LAMBDA_REC,
+            "lambda_gp": config.LAMBDA_GP,
+            "n_critic": config.N_CRITIC,
+            # ... Add other hyperparameters here
+        })
+
+        # Ensure DEVICE is tracked in WandB
+        wandb.config.update({"device": config.DEVICE})
 
 
