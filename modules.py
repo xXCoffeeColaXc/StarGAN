@@ -7,22 +7,50 @@ from utils import label2onehot
 ##############################
 #           Blocks           #
 ##############################
+class SelfAttention(nn.Module):
+    def __init__(self, channels, size) -> None:
+        """
+        Args:
+            channels: Channel dimension.
+            size: Current image resolution.
+        """
+        super(SelfAttention, self).__init__()
+        self.channels = channels
+        self.size = size
+        self.mha = nn.MultiheadAttention(channels, 4, batch_first=True)
+        self.ln = nn.LayerNorm([channels])
+        self.ff_self = nn.Sequential(
+            nn.LayerNorm([channels]),
+            nn.Linear(channels, channels),
+            nn.GELU(),
+            nn.Linear(channels, channels),
+        )
+
+    def forward(self, x):
+        x = x.view(-1, self.channels, self.size * self.size).swapaxes(1, 2)
+        x_ln = self.ln(x)
+        attention_value, _ = self.mha(x_ln, x_ln, x_ln)
+        attention_value = attention_value + x
+        attention_value = self.ff_self(attention_value) + attention_value
+        return attention_value.swapaxes(2, 1).view(-1, self.channels, self.size, self.size)
+    
 
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels) -> None:
         super(ResidualBlock, self).__init__()
 
+       
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.InstanceNorm2d(out_channels, affine=True, track_running_stats=True),
-            nn.ReLU(inplace=True),
+            nn.InstanceNorm2d(out_channels, affine=True, track_running_stats=True),  # NOTE GroupNorm
+            nn.ReLU(inplace=True), # NOTE GELU
             nn.Conv2d(out_channels, out_channels, 3, stride=1, padding=1, bias=False),
-            nn.InstanceNorm2d(out_channels, affine=True, track_running_stats=True),
+            nn.InstanceNorm2d(out_channels, affine=True, track_running_stats=True),  # NOTE GroupNorm
         )
 
 
     def forward(self, x):
-        return x + self.conv(x)
+        return x + self.conv(x) # F.gelu(x + self.conv(x))
     
 
 class ConvBlock(nn.Module):
@@ -57,11 +85,14 @@ class Generator(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-        # TODO create depth paramter for controlling donw and upsamling layers
+        # TODO create depth parameter for controlling down and upsamling layers depth
         # Downsampling: 64-128-256-512
         self.down1 = ConvBlock(features    , features * 2)
+        # NOTE sa1
         self.down2 = ConvBlock(features * 2, features * 4)
+        # NOTE sa2
         self.down3 = ConvBlock(features * 4, features * 8)
+        # NOTE sa3
 
         # Bottleneck
         bottleneck_layers = [ResidualBlock(features * 8, features * 8) for _ in range(repeat_num)]
@@ -69,8 +100,11 @@ class Generator(nn.Module):
 
         # Upsampling
         self.up1 = ConvBlock(features * 8    , features * 4, down=False)
+        # NOTE sa4
         self.up2 = ConvBlock(features * 4 * 2, features * 2, down=False)
+        # NOTE sa5
         self.up3 = ConvBlock(features * 2 * 2, features    , down=False)
+        # NOTE sa6
 
         self.final_up = nn.Sequential(
             nn.Conv2d(features, in_channels, kernel_size=7, stride=1, padding=3, bias=False),
