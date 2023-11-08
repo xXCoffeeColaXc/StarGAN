@@ -13,7 +13,7 @@ def update_lr(g_opt, d_opt, g_lr, d_lr):
     for param_group in d_opt.param_groups:
         param_group['lr'] = d_lr
 
-    wandb.config.update({"d_lr": d_lr, "g_lr": g_lr})
+    wandb.config.update({"d_lr": d_lr, "g_lr": g_lr}, allow_val_change=True)
 
 def classification_loss(logit, target): 
     """Compute binary or softmax cross entropy loss."""

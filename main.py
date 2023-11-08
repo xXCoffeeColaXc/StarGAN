@@ -9,7 +9,7 @@ def main():
     # Create Datalaoders
     train_transform = transforms.Compose([
             transforms.Resize(config.IMAGE_SIZE, transforms.InterpolationMode.BILINEAR),  # Resize the smallest side to 128 and maintain aspect ratio
-            transforms.RandomCrop(config.IMAGE_SIZE), # is this doing anything ?
+            transforms.RandomCrop(config.IMAGE_SIZE), 
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
@@ -17,6 +17,7 @@ def main():
     
     val_transform = transforms.Compose([
         transforms.Resize(config.IMAGE_SIZE, transforms.InterpolationMode.BILINEAR),  # Resize the smallest side to 128 and maintain aspect ratio
+        transforms.RandomCrop(config.IMAGE_SIZE),
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])

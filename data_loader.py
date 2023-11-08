@@ -4,6 +4,7 @@ from PIL import Image
 import torch
 import os
 from utils import condition2onehot
+import config
 
 # Eventually delete Dawn Dataset, merge the two into one
 class DawnDataset:
@@ -37,7 +38,9 @@ class ACDCDataset(Dataset):
         # Define the weather conditions and corresponding labels
         self.selected_conditions = selected_conditions
         self.condition_labels = condition2onehot(selected_conditions)
-        print(self.condition_labels)
+        
+        if config.ENABLE_DEBUGGING:
+            print(self.condition_labels)
        
         self.transform = transform
 

@@ -6,15 +6,15 @@ from torchvision.utils import save_image
 
 def condition2onehot(labels):
     condition_labels = {}
-    if len(labels) == 2:
-        condition_labels[labels[0]] = [0]
-        condition_labels[labels[1]] = [1]
-    else:
-        # Generate one-hot encoded vectors
-        for i, condition in enumerate(labels):
-            one_hot_vector = [0] * len(labels)  # Initialize a list of zeros
-            one_hot_vector[i] = 1  # Set the bit for the current condition
-            condition_labels[condition] = one_hot_vector  # Assign the vector to the condition
+    # if len(labels) == 2:
+    #     condition_labels[labels[0]] = [0]
+    #     condition_labels[labels[1]] = [1]
+    # else:
+    # Generate one-hot encoded vectors
+    for i, condition in enumerate(labels):
+        one_hot_vector = [0] * len(labels)  # Initialize a list of zeros
+        one_hot_vector[i] = 1  # Set the bit for the current condition
+        condition_labels[condition] = one_hot_vector  # Assign the vector to the condition
     return condition_labels
 
 def label2onehot(labels, dim):
@@ -35,7 +35,8 @@ def save_some_examples(gen, val_loader, epoch, folder):
     rand_idx = torch.randperm(y.size(0)) # Generate target domain labels randomly.
     label_trg = y[rand_idx]
 
-    print(onehot2label(label_trg.cpu()))
+    if config.ENABLE_DEBUGGING:
+        print(onehot2label(label_trg.cpu()))
     target_indices = onehot2label(label_trg.cpu())
     gen.eval()
     with torch.no_grad():
