@@ -5,7 +5,7 @@ from torch.optim import Adam
 from modules import Discriminator, Generator, ConvBlock
 import config
 import time
-from train import train_fn
+from train import train_fn, val_fn
 from utils import *
 import wandb
 
@@ -37,9 +37,9 @@ class StarGAN():
             if config.SAVE_MODEL and epoch%5==0:
                 self.save_model()
                 
-            # Save images for debugging
+            # Validate and save images
             if epoch%5==0:
-                save_some_examples(self.gen, self.val_loader, epoch, folder=config.OUTPUT_IMG_DIR)
+                val_fn(disc=self.disc, gen=self.gen, loader=self.val_loader, visualize=True, epoch=epoch, folder=config.OUTPUT_IMG_DIR)
 
         # Finish the WandB run when you're done training
         wandb.finish()

@@ -5,6 +5,7 @@ from tqdm import tqdm
 import torch.nn.functional as F
 import datetime
 import wandb
+from utils import *
 
 def update_lr(g_opt, d_opt, g_lr, d_lr):
     """Decay learning rates of the generator and discriminator."""
@@ -108,6 +109,7 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time, epoch):
 
         # Logging
         loss = {}
+        loss['D/loss'] = d_loss.item()
         loss['D/d_loss_adversial'] = d_loss_adversial.item()
         loss['D/loss_real'] = d_loss_real.item()
         loss['D/loss_fake'] = d_loss_fake.item()
@@ -183,6 +185,48 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time, epoch):
             wandb.log({"d_lr": d_lr, "g_lr": g_lr})
             wandb.log({"epoch": epoch})
 
+
+def val_fn(disc, gen, loader, visualize, epoch, folder):
+    disc.eval()  # Set the discriminator to evaluation mode
+    gen.eval()   # Set the generator to evaluation mode
+
+    total_val_loss = 0.0
+
+    with torch.no_grad():  # Disable gradient computation for efficiency
+        for idx, (x, y) in enumerate(loader):
+            # Similar data preprocessing steps as in the training loop
+
+            x_real = x.to(config.DEVICE)
+            c_org = y.to(config.DEVICE)
+            c_trg = y[torch.randperm(y.size(0))]  # Calculate the target labels for validation as needed
+
+            # Forward pass for generator
+            x_fake = gen(x_real, c_trg)
+            out_src, out_cls = disc(x_fake)
+            x_reconst = gen(x_fake, c_org)
+
+            # Calculate validation loss
+            g_loss_fake = - torch.mean(out_src) # Adversarial loss
+            g_loss_cls = classification_loss(out_cls, c_trg)  # Classification loss
+            g_loss_rec = torch.mean(torch.abs(x_real-x_reconst)) # Reconstruction loss
+
+            g_loss = g_loss_fake + config.LAMBDA_REC * g_loss_rec + config.LAMBDA_CLS * g_loss_cls
+
+            # Accumulate the validation loss
+            total_val_loss += g_loss.item()
+
+    # Calculate the average validation loss
+    average_val_loss = total_val_loss / len(loader)
+
+    gen.train()
+    disc.train()
+
+    # TODO merge this two function !!!
+    if visualize:
+        save_some_examples(gen, loader, epoch, folder)
+
+    if config.ENABLE_LOGGING:
+        wandb.log({"avg_val_loss": average_val_loss})
 
 
 def test_fn():
