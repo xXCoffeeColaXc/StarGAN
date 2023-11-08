@@ -93,18 +93,21 @@ class Generator(nn.Module):
         # NOTE sa2
         self.down3 = ConvBlock(features * 4, features * 8)
         # NOTE sa3
+        self.down4 = ConvBlock(features * 8, features * 16)
 
         # Bottleneck
-        bottleneck_layers = [ResidualBlock(features * 8, features * 8) for _ in range(repeat_num)]
+        bottleneck_layers = [ResidualBlock(features * 16, features * 16) for _ in range(repeat_num)]
         self.bottleneck = nn.Sequential(*bottleneck_layers)
 
         # Upsampling
-        self.up1 = ConvBlock(features * 8    , features * 4, down=False)
-        # NOTE sa4
-        self.up2 = ConvBlock(features * 4 * 2, features * 2, down=False)
+        self.up1 = ConvBlock(features * 16    , features * 8, down=False)
         # NOTE sa5
-        self.up3 = ConvBlock(features * 2 * 2, features    , down=False)
+        self.up2 = ConvBlock(features * 8 * 2 , features * 4, down=False)
         # NOTE sa6
+        self.up3 = ConvBlock(features * 4 * 2, features * 2, down=False)
+        # NOTE sa7
+        self.up4 = ConvBlock(features * 2 * 2, features    , down=False)
+        # NOTE sa8
 
         self.final_up = nn.Sequential(
             nn.Conv2d(features, in_channels, kernel_size=7, stride=1, padding=3, bias=False),
@@ -128,11 +131,12 @@ class Generator(nn.Module):
 
         # Upsampling with skip connections
         up1 = self.up1(bottle)
-        up2 = self.up2(torch.cat([up1, d3], dim=1))  # Skip connection from down3
-        up3 = self.up3(torch.cat([up2, d2], dim=1))  # Skip connection from down2
+        up2 = self.up2(torch.cat([up1, d4], dim=1))  # Skip connection from down4
+        up3 = self.up3(torch.cat([up2, d3], dim=1))  # Skip connection from down3
+        up4 = self.up3(torch.cat([up3, d2], dim=1))  # Skip connection from down2
 
         # Final up (no skip connection because initial_down has different dimensions)
-        out = self.final_up(up3)
+        out = self.final_up(up4)
         return out
 
 ##############################

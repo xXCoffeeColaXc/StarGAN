@@ -147,6 +147,7 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time, epoch):
             loss['G/loss_fake'] = g_loss_fake.item()
             loss['G/loss_rec'] = g_loss_rec.item()
             loss['G/loss_cls'] = g_loss_cls.item()
+            loss['G/loss'] = g_loss.item()
 
         # =================================================================================== #
         #                                 4. Miscellaneous                                    #
@@ -199,7 +200,8 @@ def val_fn(disc, gen, loader, visualize, epoch, folder):
             x_real = x.to(config.DEVICE)
             c_org = y.to(config.DEVICE)
             c_trg = y[torch.randperm(y.size(0))]  # Calculate the target labels for validation as needed
-
+            c_trg = c_trg.to(config.DEVICE)
+            
             # Forward pass for generator
             x_fake = gen(x_real, c_trg)
             out_src, out_cls = disc(x_fake)
