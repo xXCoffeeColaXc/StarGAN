@@ -6,11 +6,15 @@ from torchvision.utils import save_image
 
 def condition2onehot(labels):
     condition_labels = {}
-     # Generate one-hot encoded vectors
-    for i, condition in enumerate(labels):
-        one_hot_vector = [0] * len(labels)  # Initialize a list of zeros
-        one_hot_vector[i] = 1  # Set the bit for the current condition
-        condition_labels[condition] = one_hot_vector  # Assign the vector to the condition
+    if len(labels) == 2:
+        condition_labels[labels[0]] = [0]
+        condition_labels[labels[1]] = [1]
+    else:
+        # Generate one-hot encoded vectors
+        for i, condition in enumerate(labels):
+            one_hot_vector = [0] * len(labels)  # Initialize a list of zeros
+            one_hot_vector[i] = 1  # Set the bit for the current condition
+            condition_labels[condition] = one_hot_vector  # Assign the vector to the condition
     return condition_labels
 
 def label2onehot(labels, dim):
