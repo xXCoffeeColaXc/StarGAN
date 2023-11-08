@@ -32,7 +32,7 @@ class StarGAN():
         start_time = time.time()
 
         for epoch in range(1, config.NUM_EPOCHS):
-            train_fn(disc=self.disc, gen=self.gen, loader=self.train_loader, g_opt=self.opt_gen, d_opt=self.opt_disc, start_time=start_time) # could pass GradientScaler
+            train_fn(disc=self.disc, gen=self.gen, loader=self.train_loader, g_opt=self.opt_gen, d_opt=self.opt_disc, start_time=start_time, epoch=epoch) # could pass GradientScaler
 
             if config.SAVE_MODEL and epoch%5==0:
                 self.save_model()
@@ -40,6 +40,7 @@ class StarGAN():
             # Save images for debugging
             if epoch%5==0:
                 save_some_examples(self.gen, self.val_loader, epoch, folder=config.OUTPUT_IMG_DIR)
+
         
         # Finish the WandB run when you're done training
         wandb.finish()
@@ -95,7 +96,8 @@ class StarGAN():
     def setup_logger(self):
         # Initialize WandB
         wandb.init(project='stargan-weather', entity='tamsyandro', config={
-            "learning_rate": config.D_LR,  # Both discriminator and generator learning rate
+            "d_lr": config.D_LR,  # Both discriminator and generator learning rate
+            "g_lr": config.G_LR,
             "epochs": config.NUM_EPOCHS,
             "batch_size": config.BATCH_SIZE,
             "image_size": config.IMAGE_SIZE,
@@ -104,6 +106,8 @@ class StarGAN():
             "lambda_rec": config.LAMBDA_REC,
             "lambda_gp": config.LAMBDA_GP,
             "n_critic": config.N_CRITIC,
+            "num_epoch_decay": config.NUM_EPOCHS_DECAY,
+            "lr_update_step": config.LR_UPDATE_STEP,
             # ... Add other hyperparameters here
         })
 

@@ -6,12 +6,14 @@ import torch.nn.functional as F
 import datetime
 import wandb
 
-def update_lr(self, g_lr, d_lr):
+def update_lr(g_opt, d_opt, g_lr, d_lr):
     """Decay learning rates of the generator and discriminator."""
-    for param_group in self.g_optimizer.param_groups:
+    for param_group in g_opt.param_groups:
         param_group['lr'] = g_lr
-    for param_group in self.d_optimizer.param_groups:
+    for param_group in d_opt.param_groups:
         param_group['lr'] = d_lr
+
+    wandb.config.update({"d_lr": d_lr, "g_lr": g_lr})
 
 def classification_loss(logit, target): 
     """Compute binary or softmax cross entropy loss."""
@@ -39,7 +41,7 @@ def reset_grad(g_opt, d_opt):
     d_opt.zero_grad()
 
 
-def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
+def train_fn(disc, gen, loader, g_opt, d_opt, start_time, epoch):
 
     loop = tqdm(loader, leave=True)
 
@@ -66,6 +68,7 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
         # =================================================================================== #
         #                             2. Train the discriminator                              #
         # =================================================================================== #
+
 
         # Compute loss with real images
         out_src, out_cls = disc(x_real)
@@ -96,14 +99,16 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
         # Backward and optimize
         # NOTE (d_loss_real + d_loss_fake) / 2 ??
         # NOTE: L(D) = -L(adv) + lamda_cls * L_r(cls)
+        d_loss_adversial = (d_loss_real + d_loss_fake)
         d_loss = (d_loss_real + d_loss_fake) + config.LAMBDA_CLS * d_loss_cls + config.LAMBDA_GP * d_loss_gp
-        #reset_grad(g_opt, d_opt) 
-        d_opt.zero_grad()
+        
+        reset_grad(g_opt, d_opt) 
         d_loss.backward()
         d_opt.step()
 
         # Logging
         loss = {}
+        loss['D/d_loss_adversial'] = d_loss_adversial.item()
         loss['D/loss_real'] = d_loss_real.item()
         loss['D/loss_fake'] = d_loss_fake.item()
         loss['D/loss_cls'] = d_loss_cls.item()
@@ -121,8 +126,8 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
             # Originial-to-target domain
             x_fake = gen(x_real, c_trg)
             out_src, out_cls = disc(x_fake)
-            g_loss_fake = - torch.mean(out_src)
-            g_loss_cls = classification_loss(out_cls, label_trg)
+            g_loss_fake = - torch.mean(out_src) # Adversarial loss
+            g_loss_cls = classification_loss(out_cls, label_trg)  # Classification loss
 
             # Target-to-original domain
             x_reconst = gen(x_fake, c_org)
@@ -131,8 +136,8 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
             # Backward and optimize
             # NOTE: L(G) = L(adv) + lamda_cls * L_f(cls) + lambda_rec * L(rec)
             g_loss = g_loss_fake + config.LAMBDA_REC * g_loss_rec + config.LAMBDA_CLS * g_loss_cls
-            #reset_grad(g_opt, d_opt) 
-            g_opt.zero_grad()
+            
+            reset_grad(g_opt, d_opt) 
             g_loss.backward()
             g_opt.step()
 
@@ -161,12 +166,21 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time):
 
         # LR decay
         # TODO
+        d_lr = wandb.config.d_lr
+        g_lr = wandb.config.g_lr
+
         # Decay learning rates.
-        # if (idx+1) % config.LR_UPDATE_STEP == 0 and (idx+1) > ( - self.num_iters_decay):
-        #     g_lr -= (config.G_LR / float(self.num_iters_decay))
-        #     d_lr -= (config.D_LR / float(self.num_iters_decay))
-        #     update_lr(g_lr, d_lr)
-        #     print ('Decayed learning rates, g_lr: {}, d_lr: {}.'.format(g_lr, d_lr))
+        if len(loader) < config.LR_UPDATE_STEP:
+            lr_update_step = len(loader) - 1
+        else:
+            lr_update_step = config.LR_UPDATE_STEP
+        if (idx+1) % lr_update_step == 0 and epoch > config.NUM_EPOCHS_DECAY:
+            g_lr -= (config.G_LR / float(config.NUM_EPOCHS_DECAY * 100))
+            d_lr -= (config.D_LR / float(config.NUM_EPOCHS_DECAY * 100))
+            update_lr(g_opt=g_opt, d_opt=d_opt, g_lr=g_lr, d_lr=d_lr)
+            print ('Decayed learning rates, g_lr: {}, d_lr: {}.'.format(g_lr, d_lr))
+
+        wandb.log({"d_lr": d_lr, "g_lr": g_lr})
 
 
 

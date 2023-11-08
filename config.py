@@ -27,12 +27,12 @@ LAMBDA_GP = 10
 # Training config
 BETA1 = 0.5 # for ADAM 
 BETA2 = 0.999 # for ADAM (this is the default, no ?)
-D_LR = 1e-4
-G_LR = 1e-4
+D_LR = 2e-4
+G_LR = 2e-4
 BATCH_SIZE = 4
 NUM_EPOCHS = 200
-NUM_EPOCHS_DECAY = 100
-LR_UPDATE_STEP = 1000
+NUM_EPOCHS_DECAY = 2
+LR_UPDATE_STEP = 100
 N_CRITIC = 5 # number of D updates per each G update 
 NUM_WORKERS = 4
 SAVE_MODEL = False
