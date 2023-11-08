@@ -57,7 +57,8 @@ class Generator(nn.Module):
             nn.ReLU(inplace=True)
         )
 
-        # Downsampling: 64-128-256
+        # TODO create depth paramter for controlling donw and upsamling layers
+        # Downsampling: 64-128-256-512
         self.down1 = ConvBlock(features    , features * 2)
         self.down2 = ConvBlock(features * 2, features * 4)
         self.down3 = ConvBlock(features * 4, features * 8)
