@@ -7,17 +7,24 @@ from utils import setup_folders
 
 def main():
     # Create Datalaoders
-    transform = transforms.Compose([
+    train_transform = transforms.Compose([
             transforms.Resize(config.IMAGE_SIZE, transforms.InterpolationMode.BILINEAR),  # Resize the smallest side to 128 and maintain aspect ratio
             transforms.RandomCrop(config.IMAGE_SIZE), # is this doing anything ?
+            transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ])
+    
+    val_transform = transforms.Compose([
+        transforms.Resize(config.IMAGE_SIZE, transforms.InterpolationMode.BILINEAR),  # Resize the smallest side to 128 and maintain aspect ratio
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ])
    
-    train_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, selected_conditions=config.SELECTED_DOMAIN, transform=transform, mode='train')
+    train_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, selected_conditions=config.SELECTED_DOMAIN, transform=train_transform, mode='train')
     train_loader = DataLoader(train_dataset, batch_size=config.BATCH_SIZE, shuffle=True)
 
-    val_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, selected_conditions=config.SELECTED_DOMAIN, transform=transform, mode='val')
+    val_dataset = ACDCDataset(root_dir=config.ACDC_DATASET_DIR, selected_conditions=config.SELECTED_DOMAIN, transform=val_transform, mode='val')
     val_loader = DataLoader(val_dataset, batch_size=config.BATCH_SIZE, shuffle=True)
 
 
