@@ -163,8 +163,7 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time, epoch):
 
         if config.ENABLE_LOGGING:
             wandb.log(loss)
-
-
+            
             # LR decay
             # TODO try not to save lr in wandb
             d_lr = wandb.config.d_lr
@@ -181,9 +180,8 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time, epoch):
                 update_lr(g_opt=g_opt, d_opt=d_opt, g_lr=g_lr, d_lr=d_lr)
                 print ('Decayed learning rates, g_lr: {}, d_lr: {}.'.format(g_lr, d_lr))
 
-        
             wandb.log({"d_lr": d_lr, "g_lr": g_lr})
-
+            wandb.log({"epoch": epoch})
 
 
 

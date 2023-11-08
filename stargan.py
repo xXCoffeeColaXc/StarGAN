@@ -41,7 +41,6 @@ class StarGAN():
             if epoch%5==0:
                 save_some_examples(self.gen, self.val_loader, epoch, folder=config.OUTPUT_IMG_DIR)
 
-
         # Finish the WandB run when you're done training
         wandb.finish()
 
