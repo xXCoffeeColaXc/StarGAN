@@ -125,15 +125,16 @@ class Generator(nn.Module):
         d2 = self.down1(d1)
         d3 = self.down2(d2)
         d4 = self.down3(d3) 
+        d5 = self.down4(d4)
 
         # Bottleneck
-        bottle = self.bottleneck(d4)
+        bottle = self.bottleneck(d5)
 
         # Upsampling with skip connections
         up1 = self.up1(bottle)
         up2 = self.up2(torch.cat([up1, d4], dim=1))  # Skip connection from down4
         up3 = self.up3(torch.cat([up2, d3], dim=1))  # Skip connection from down3
-        up4 = self.up3(torch.cat([up3, d2], dim=1))  # Skip connection from down2
+        up4 = self.up4(torch.cat([up3, d2], dim=1))  # Skip connection from down2
 
         # Final up (no skip connection because initial_down has different dimensions)
         out = self.final_up(up4)
