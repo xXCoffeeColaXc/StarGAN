@@ -56,10 +56,10 @@ class StarGAN():
 
     def build_model(self):
         # Initialize generator and discriminator
-        self.disc = Discriminator(image_size=config.IMAGE_SIZE, in_channels=config.CHANNEL_IMG, features=64, c_dim=config.NUM_DOMAINS)
+        self.disc = Discriminator(image_size=config.IMAGE_SIZE, in_channels=config.CHANNEL_IMG, features=64, c_dim=config.NUM_DOMAINS, repeat_num=config.D_DEPTH)
         self.disc = self.disc.to(config.DEVICE)
 
-        self.gen = Generator(in_channels=config.CHANNEL_IMG, features=64, c_dim=config.NUM_DOMAINS)
+        self.gen = Generator(in_channels=config.CHANNEL_IMG, features=64, c_dim=config.NUM_DOMAINS, repeat_num=config.G_BOTTLENECK_DEPTH)
         self.gen = self.gen.to(config.DEVICE)
 
         # Optimizers TODO try AdamW
@@ -108,10 +108,11 @@ class StarGAN():
             "n_critic": config.N_CRITIC,
             "num_epoch_decay": config.NUM_EPOCHS_DECAY,
             "lr_update_step": config.LR_UPDATE_STEP,
-            "weight_init": True,
+            "d_depth": config.D_DEPTH,
+            "g_depth": config.G_SAMPLE_DEPTH,
+            "g_bottleneck_depth": config.G_BOTTLENECK_DEPTH,
+            "weight_init": config.WEIGHT_INIT,
             "with_attention": False,
-            "res_depth": 6,
-            "encoder_decoder_depth": 3,
             "skip_connection": True,
             # ... Add other hyperparameters here
         })

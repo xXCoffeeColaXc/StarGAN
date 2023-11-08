@@ -140,23 +140,26 @@ class Generator(nn.Module):
 ##############################
 
 class Discriminator(nn.Module):
-    def __init__(self, image_size=128, in_channels=3, features=64, c_dim=3, repeat_num=6) -> None:
+    def __init__(self, image_size=128, in_channels=3, features=64, c_dim=3, repeat_num=4) -> None:
         super(Discriminator, self).__init__()
-        
+       
         layers = []
-        for i in range(1, repeat_num):
-            if i==1:
-                layers.append(ConvBlock(in_channels, features, leaky=True))
-            layers.append(ConvBlock(features, features*2, leaky=True))
-            features = features*2
+        current_features = in_channels
+        for i in range(repeat_num - 1):
+            next_features = features * (2 ** i)
+            layers.append(ConvBlock(current_features, next_features, leaky=True))
+            current_features = next_features 
 
         self.conv_layers = nn.Sequential(*layers)
 
-        kernel_size = int(image_size / np.power(2, repeat_num))
-        self.out_src = nn.Conv2d(features, 1, kernel_size=3, stride=1, padding=1, bias=False) # 2x2x1 patch
-        self.out_cls = nn.Conv2d(features, c_dim, kernel_size=kernel_size, stride=1, padding=0, bias=False) #1x1x4
+        kernel_size = image_size // (2 ** (repeat_num - 1))
 
-        
+        # Output layer for real/fake discrimination (PatchGAN)
+        self.out_src = nn.Conv2d(current_features, 1, kernel_size=3, stride=1, padding=1, bias=False)
+
+        # Output layer for class prediction (c_dim outputs, each a 1x1 patch)
+        self.out_cls = nn.Conv2d(current_features, c_dim, kernel_size=kernel_size, stride=1, padding=0, bias=False)
+
     def forward(self, x):
         h = self.conv_layers(x)
         out_src = self.out_src(h)

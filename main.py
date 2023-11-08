@@ -32,7 +32,8 @@ def main():
     # Initialize StarGAN
     model = StarGAN(train_loader=train_loader, val_loader=val_loader)
 
-    #model.print_model()
+    if config.ENABLE_DEBUGGING:
+        model.print_model()
 
     model.train()
 

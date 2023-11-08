@@ -161,26 +161,28 @@ def train_fn(disc, gen, loader, g_opt, d_opt, start_time, epoch):
                 log += ", {}: {:.4f}".format(tag, value)
             print(log)
 
-        wandb.log(loss)
+        if config.ENABLE_LOGGING:
+            wandb.log(loss)
 
 
-        # LR decay
-        # TODO
-        d_lr = wandb.config.d_lr
-        g_lr = wandb.config.g_lr
+            # LR decay
+            # TODO try not to save lr in wandb
+            d_lr = wandb.config.d_lr
+            g_lr = wandb.config.g_lr
 
-        # Decay learning rates.
-        if len(loader) < config.LR_UPDATE_STEP:
-            lr_update_step = len(loader) - 1
-        else:
-            lr_update_step = config.LR_UPDATE_STEP
-        if (idx+1) % lr_update_step == 0 and epoch > config.NUM_EPOCHS_DECAY:
-            g_lr -= (config.G_LR / float(config.NUM_EPOCHS_DECAY * 100))
-            d_lr -= (config.D_LR / float(config.NUM_EPOCHS_DECAY * 100))
-            update_lr(g_opt=g_opt, d_opt=d_opt, g_lr=g_lr, d_lr=d_lr)
-            print ('Decayed learning rates, g_lr: {}, d_lr: {}.'.format(g_lr, d_lr))
+            # Decay learning rates.
+            if len(loader) < config.LR_UPDATE_STEP:
+                lr_update_step = len(loader) - 1
+            else:
+                lr_update_step = config.LR_UPDATE_STEP
+            if (idx+1) % lr_update_step == 0 and epoch > config.NUM_EPOCHS_DECAY:
+                g_lr -= (config.G_LR / float(config.NUM_EPOCHS_DECAY * 100))
+                d_lr -= (config.D_LR / float(config.NUM_EPOCHS_DECAY * 100))
+                update_lr(g_opt=g_opt, d_opt=d_opt, g_lr=g_lr, d_lr=d_lr)
+                print ('Decayed learning rates, g_lr: {}, d_lr: {}.'.format(g_lr, d_lr))
 
-        wandb.log({"d_lr": d_lr, "g_lr": g_lr})
+        
+            wandb.log({"d_lr": d_lr, "g_lr": g_lr})
 
 
 

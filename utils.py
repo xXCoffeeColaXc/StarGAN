@@ -28,6 +28,12 @@ def onehot2label(labels):
     """Convert one-hot vectors to label indices """
     return np.where(labels.numpy() == 1)[1]
 
+def denormalize(tensor, means=[0.485, 0.456, 0.406], stds=[0.229, 0.224, 0.225]):
+    denormalized = tensor.clone()
+    for t, m, s in zip(denormalized, means, stds):
+        t.mul_(s).add_(m)  # Reverse the normalization, original_pixel=normalized_pixel×std+mean
+    return denormalized
+
 def save_some_examples(gen, val_loader, epoch, folder):
     x, y = next(iter(val_loader))
     x, y = x.to(config.DEVICE), y.to(config.DEVICE)
@@ -40,11 +46,11 @@ def save_some_examples(gen, val_loader, epoch, folder):
     target_indices = onehot2label(label_trg.cpu())
     gen.eval()
     with torch.no_grad():
-        y_fake = gen(x, label_trg)
-        y_fake = y_fake * 0.5 + 0.5  # remove normalization
+        x_fake = gen(x, label_trg)
+        x_fake = x_fake * 0.5 + 0.5  # remove normalization
         x = x * 0.5 + 0.5
         batch_labels = [config.SELECTED_DOMAIN[l] for l in target_indices]
-        save_image(y_fake, folder + f"/y_gen_{epoch}_{batch_labels}.png")
+        save_image(x_fake, folder + f"/gen_{epoch}_{batch_labels}.png")
         save_image(x, folder + f"/input_{epoch}.png")
     gen.train()
 
