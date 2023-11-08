@@ -6,8 +6,7 @@ from modules import Discriminator, Generator, ConvBlock
 import config
 import time
 from train import train_fn
-from utils import save_checkpoint, save_some_examples, load_checkpoint
-import os
+from utils import *
 import wandb
 
 class StarGAN():
@@ -15,7 +14,8 @@ class StarGAN():
         self.train_loader = train_loader
         self.val_loader = val_loader
 
-        self.setup_logger()
+        if config.ENABLE_LOGGING:
+            self.setup_logger()
         self.build_model()
 
 
@@ -23,11 +23,11 @@ class StarGAN():
         if config.LOAD_MODEL:
             self.restore_model()
         else:
-            self.gen.apply(self.weights_init_normal)
+            self.gen.apply(self.weights_init_normal) # TODO try without this
             self.disc.apply(self.weights_init_normal)
-
+        
         # Start training.
-        if config.LOG:
+        if config.ENABLE_LOGGING:
             print('[START TRAINING]')
         start_time = time.time()
 
@@ -41,7 +41,7 @@ class StarGAN():
             if epoch%5==0:
                 save_some_examples(self.gen, self.val_loader, epoch, folder=config.OUTPUT_IMG_DIR)
 
-        
+
         # Finish the WandB run when you're done training
         wandb.finish()
 
@@ -66,7 +66,7 @@ class StarGAN():
         self.opt_disc = Adam(self.disc.parameters(), lr=config.D_LR, betas=(config.BETA1, config.BETA2))
         self.opt_gen = Adam(self.gen.parameters(), lr=config.G_LR, betas=(config.BETA1, config.BETA2))
 
-        if config.LOG:
+        if config.ENABLE_LOGGING:
             print("[MODEL BUILT]")
 
     def print_model(self):
@@ -108,6 +108,11 @@ class StarGAN():
             "n_critic": config.N_CRITIC,
             "num_epoch_decay": config.NUM_EPOCHS_DECAY,
             "lr_update_step": config.LR_UPDATE_STEP,
+            "weight_init": True,
+            "with_attention": False,
+            "res_depth": 6,
+            "encoder_decoder_depth": 3,
+            "skip_connection": True,
             # ... Add other hyperparameters here
         })
 
